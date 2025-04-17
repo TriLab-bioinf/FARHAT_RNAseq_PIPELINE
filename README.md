@@ -29,4 +29,6 @@ The pipeline will generate the following directories:
 **3-deduplicated** with the deduplicated bam files (picard output).
 
 **4-read_counts** with the read counts file.
+
+**5-multiqc** with a report summarizing all the steps above.
  
