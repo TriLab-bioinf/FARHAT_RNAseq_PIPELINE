@@ -15,7 +15,7 @@ If the samples.prefix file is in some other directory or has a different name, y
 sbatch ./RNAseq_pipeline_v1.sh
 
 ```
-If the patha to the prefix file and the config file are not the working directory, you can run the pipeline like so:
+If the path to the prefix file and the config file are not in the working directory or have a different name, you can run the pipeline pointing to both files like so:
 ```
 sbatch ./RNAseq_pipeline_v1.sh -p /new/path/samples.prefix -c /my/new/config/path/config.txt
 ```  
