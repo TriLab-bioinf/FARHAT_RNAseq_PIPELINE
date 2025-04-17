@@ -1,0 +1,18 @@
+# Farhat: set the full paths to your input files by setting the variables below
+
+# Full path to reference genome fasta file.
+GENOME_FA=/data/parweenf2/MAIT_RNAseq/STAR_DB/input_files/genome.fa
+
+# Full path to annotation gtf file.
+GENOME_GTF=/data/parweenf2/MAIT_RNAseq/STAR_DB/input_files/annotation.gtf
+
+# Full path to STAR database files
+GENOME_DIR=/data/$USER/MAIT_RNAseq/STAR_DB/STAR_index
+
+# Full path to raw read directory
+# ** NOTE: read files have to follow the format: <sample_prefix>.R1/2.fastq.gz **
+READS=/data/$USER/MAIT_RNAseq/READS
+
+# Set number of CPUs to use
+CPU=16
+
