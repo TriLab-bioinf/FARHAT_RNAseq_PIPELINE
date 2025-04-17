@@ -1,4 +1,4 @@
-### FARHA RNAseq Workflow
+### FARHAT RNAseq Workflow
 
 To run the pipeline follow the following steps:
 
