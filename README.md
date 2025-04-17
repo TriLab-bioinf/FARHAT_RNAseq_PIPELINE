@@ -12,12 +12,12 @@ If the samples.prefix file is in some other directory or has a different name, y
 
 3) Run the pipeline in biowulf using default values by typing:
 ```
-./RNAseq_pipeline_v1.sh
+sbatch ./RNAseq_pipeline_v1.sh
 
 ```
 If the patha to the prefix file and the config file are not the working directory, you can run the pipeline like so:
 ```
-./RNAseq_pipeline_v1.sh -p /new/path/samples.prefix -c /my/new/config/path/config.txt
+sbatch ./RNAseq_pipeline_v1.sh -p /new/path/samples.prefix -c /my/new/config/path/config.txt
 ```  
 
 The pipeline will generate the following directories:
