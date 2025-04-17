@@ -44,17 +44,21 @@ WD=$(pwd -P)
 source $CONFIG_FILE
 
 # Run FASTQC
+
+echo; echo "Running FASTQC or raw reads"; echo
+
+
 while IFS= read -r prefix; do
     file1=${READS}/${prefix}.R1.fastq.gz
     file2=${READS}/${prefix}.R2.fastq.gz
     fastqc -t ${CPU} $file1 $file2
-done < "$input"
-
-multiqc ${READS}/
+done < $input
 
 # Set trimmomatic output directory
-TRIM_DIR="${WD}/1-trimmed"
-mkdir -p "$TRIM_DIR"
+echo; echo "Running Trimmomatic..."; echo
+
+TRIM_DIR=${WD}/1-trimmed
+mkdir -p ${TRIM_DIR}
 
 # Trimming with Trimmomatic
 while IFS= read -r prefix; do
@@ -71,20 +75,19 @@ while IFS= read -r prefix; do
 done < "$input"
 
 # Run FASTQC again on trimmed reads
+
+echo; echo "Running FASTQC on trimmed reads..."; echo
+
 while IFS= read -r prefix; do
     file1=${TRIM_DIR}/${prefix}.R1.paired.fastq.gz
     file2=${TRIM_DIR}/${prefix}.R2.paired.fastq.gz
     fastqc -t ${CPU} $file1 $file2
 done < "$input"
 
-# Set genome input files explicitly
-GENOME_FA="${WD}/STAR_DB/input_files/genome.fa"
-GENOME_GTF="${WD}/STAR_DB/input_files/annotation.gtf"
-
 # Build index if not already present
-if [ ! -f "${GENOME_DIR}/genomeParameters.txt" ]; then
-    echo "Building STAR genome index..."
-    mkdir -p "${GENOME_DIR}"
+if [ ! -f ${GENOME_DIR}/genomeParameters.txt ]; then
+    echo; echo "Building STAR genome index..."; echo
+    mkdir -p ${GENOME_DIR}
 
     STAR --runThreadN ${CPU} \
          --runMode genomeGenerate \
@@ -95,8 +98,11 @@ if [ ! -f "${GENOME_DIR}/genomeParameters.txt" ]; then
 fi
 
 # Align reads
-ALIGN_OUT_DIR="${WD}/2-alignments"
-mkdir -p "$ALIGN_OUT_DIR"
+
+echo; echo Running STAR alignment step; echo
+
+ALIGN_OUT_DIR=${WD}/2-alignments
+mkdir -p ${ALIGN_OUT_DIR}
 
 while IFS= read -r prefix; do
     echo "Aligning $prefix with STAR"
@@ -107,15 +113,23 @@ while IFS= read -r prefix; do
          --outFileNamePrefix ${ALIGN_OUT_DIR}/${prefix}. \
          --outSAMtype BAM SortedByCoordinate \
          --readFilesIn ${TRIM_DIR}/${prefix}.R1.paired.fastq.gz ${TRIM_DIR}/${prefix}.R2.paired.fastq.gz
+    
+    mv ${ALIGN_OUT_DIR}/${prefix}.Aligned.sortedByCoord.out.bam ${ALIGN_OUT_DIR}/${prefix}.sorted.tmp.bam
 
-    mv ${ALIGN_OUT_DIR}/${prefix}.Aligned.sortedByCoord.out.bam ${ALIGN_OUT_DIR}/${prefix}.sorted.bam
-done < "$input"
+    samtools addreplacerg -r "ID:${prefix}\tSM:${prefix}\tPL:ILLUMINA" \
+        -o ${ALIGN_OUT_DIR}/${prefix}.sorted.bam \
+        -O BAM ${ALIGN_OUT_DIR}/${prefix}.sorted.tmp.bam
 
-input="./samples.prefix"
+    rm -f ${ALIGN_OUT_DIR}/${prefix}.sorted.tmp.bam
+
+done < $input
+
 # Mark duplicates and generate BAM index
 
-DEDUP_DIR="${WD}/3-deduplicated"
-mkdir -p "$DEDUP_DIR"
+echo; echo Running deduplication step; echo
+
+DEDUP_DIR=${WD}/3-deduplicated
+mkdir -p ${DEDUP_DIR}
 
 
 while IFS= read -r prefix; do
@@ -127,21 +141,33 @@ while IFS= read -r prefix; do
         READ_NAME_REGEX=null REMOVE_DUPLICATES=true
 
     samtools index ${DEDUP_DIR}/${prefix}.sorted.dedup.bam
-done < "$input"
+done < $input
 
 
 # Count reads with featureCounts
-echo "Running featureCounts..."
+
+echo; echo "Running featureCounts..."; echo
+
 files=()
 while IFS= read -r prefix; do
     files+=(${DEDUP_DIR}/${prefix}.sorted.dedup.bam)
-done < "$input"
+done < $input
 
-COUNTS_DIR="${WD}/4-read_counts"
-mkdir -p "$COUNTS_DIR"
+COUNTS_DIR=${WD}/4-read_counts
+mkdir -p ${COUNTS_DIR}
 
-featureCounts -p -a $GTF_ANNOTATION -T ${CPU} -s 0 -F GTF -t exon -g gene_id \
+featureCounts -p -a ${GENOME_GTF} -T ${CPU} -s 0 -F GTF -t exon -g gene_id \
     -o ${COUNTS_DIR}/all_counts.txt -R BAM \
     --extraAttributes gene_name "${files[@]}"
 
+
+# Run multiqc
+echo; echo Running multiqc step; echo
+
+multiqc --force --outdir ./5-multiqc ${WD}
+
 module purge
+
+echo #########################
+echo RNAseq Pipeline Completed
+echo #########################
