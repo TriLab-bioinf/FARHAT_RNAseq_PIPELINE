@@ -23,7 +23,7 @@ Help()
 }
 
 # Parse command-line arguments
-while getopts "hp:d:t:R:a:" option; do
+while getopts "hp:c:" option; do
    case $option in
         h) Help; exit;;
         p) input=${OPTARG};;
@@ -158,6 +158,7 @@ mkdir -p ${COUNTS_DIR}
 
 featureCounts -p -a ${GENOME_GTF} -T ${CPU} -s 0 -F GTF -t exon -g gene_id \
     -o ${COUNTS_DIR}/all_counts.txt -R BAM \
+    -M --fraction -O \
     --extraAttributes gene_name "${files[@]}"
 
 
